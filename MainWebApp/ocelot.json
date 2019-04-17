@@ -1,0 +1,35 @@
+{
+  "GlobalConfiguration": {
+    "BaseUrl": "http://localhost:4110"
+  },
+  "ReRoutes": [
+    {
+      "UpstreamPathTemplate": "/ProductService/{catchAll}",
+      "DownstreamPathTemplate": "/api/{catchAll}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 8003
+        }
+      ],
+      "LoadBalancerOptions": {
+        "Type": "RoundRobin"
+      }
+    },
+    {
+      "UpstreamPathTemplate": "/EmailService/{catchAll}",
+      "DownstreamPathTemplate": "/api/{catchAll}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 8002
+        }
+      ],
+      "LoadBalancerOptions": {
+        "Type": "RoundRobin"
+      }
+    }
+  ]
+}
