@@ -1,14 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using EmailService.Controllers;
+using MassTransit;
+using MassTransit.RabbitMqTransport;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
+using System;
 
 namespace EmailService
 {
@@ -25,6 +23,20 @@ namespace EmailService
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+
+            IRabbitMqHost host = null;
+            var bus = Bus.Factory.CreateUsingRabbitMq(cfg =>
+            {
+                host = cfg.Host(new Uri($"rabbitmq://localhost"), h =>
+                {
+                    h.Username("guest");
+                    h.Password("guest");
+                });
+                cfg.ReceiveEndpoint(host, "test_queue",
+                    e => { e.Consumer<EmailController>(); });
+            });
+            services.AddScoped(provider => bus);
+            bus.Start();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

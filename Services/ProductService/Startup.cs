@@ -1,4 +1,7 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using System;
+using MassTransit;
+using MassTransit.RabbitMqTransport;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -21,6 +24,18 @@ namespace ProductService
         {
             services.AddSingleton<FakeProductRepository>();
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+
+            IRabbitMqHost host = null;
+            var bus = Bus.Factory.CreateUsingRabbitMq(cfg =>
+            {
+                host = cfg.Host(new Uri($"rabbitmq://localhost"), h =>
+                {
+                    h.Username("guest");
+                    h.Password("guest");
+                });
+            });
+            services.AddScoped(provider => bus);
+            bus.Start();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

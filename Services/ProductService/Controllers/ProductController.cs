@@ -1,8 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System;
+using Microsoft.AspNetCore.Mvc;
 using ProductService.Models;
 using ProductService.Services;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
+using MainWebApp.Models.Commands;
+using MassTransit;
 
 namespace ProductService.Controllers
 {
@@ -11,10 +15,11 @@ namespace ProductService.Controllers
     public class ProductController : ControllerBase
     {
         private readonly FakeProductRepository _productRepository;
-
-        public ProductController(FakeProductRepository productRepository)
+        private readonly IBusControl _busControl;
+        public ProductController(FakeProductRepository productRepository, IBusControl busControl)
         {
             _productRepository = productRepository;
+            _busControl = busControl;
         }
 
         // GET api/values
@@ -26,9 +31,13 @@ namespace ProductService.Controllers
 
         // GET api/values/5
         [HttpGet("{id}")]
-        public ActionResult<Product> Get(int id)
+        public async Task<ActionResult<Product>> Get(int id)
         {
-            return _productRepository.FakeSource.FirstOrDefault(x => x.Id == id);
+            var requestClient = _busControl.CreatePublishRequestClient<MessageCommand, MessageCommand>(TimeSpan.FromSeconds(10));
+            var res = await requestClient.Request(new MessageCommand { Message = "Ping" }).ConfigureAwait(false);
+            var p = _productRepository.FakeSource.FirstOrDefault(x => x.Id == id);
+            p.Name += " - " + res.Message;
+            return p;
         }
 
         // POST api/<controller>
